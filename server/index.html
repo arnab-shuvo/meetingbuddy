@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>Deepgram workshop</head>
+    <body>
+        <script>
+            navigator.mediaDevices.getUserMedia({audio: true}).then(stream=>{
+                if(!MediaRecorder.isTypeSupported('audio/webm')) return alert('Not Supported')
+                const mediaRecorder = new MediaRecorder(stream,{mimeType:'audio/webm'})
+                const socket = new WebSocket('wss://api.deepgram.com/v1/listen',['token','f82b56da5c01b7269de515338e536bf444e77385'])
+                socket.onopen = () =>{
+                    console.log('opened');
+                    mediaRecorder.addEventListener('dataavailable',event =>{
+                        socket.send(event.data)
+                    })
+                    mediaRecorder.start(250)
+                }
+                socket.onmessage = message =>{
+                    // console.log(message,'message');
+                    const data = JSON.parse(message.data)
+                    const transcript = data.channel.alternatives[0].transcript
+                    if(transcript && data.is_final){
+                        console.log(transcript)
+                    }
+                    
+                }
+            })
+        </script>
+    </body>
+</html>
+
